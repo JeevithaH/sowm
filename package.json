@@ -1,0 +1,22 @@
+{
+  "name": "impi",
+  "version": "1.0.0",
+  "description": "Interactive wedding invitation website for Harish & Sowmya",
+  "scripts": {
+    "build": "echo 'Static build ready'",
+    "start": "node server.js",
+    "dev": "node server.js",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [
+    "wedding",
+    "invitation",
+    "autoscroll",
+    "cloudflare"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  }
+}

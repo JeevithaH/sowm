@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Harish and Sowmya Wedding//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:wedding-muhurta-2026@harish-sowmya.wedding
+DTSTAMP:20261104T120000Z
+DTSTART:20261119T160000Z
+DTEND:20261119T164500Z
+SUMMARY:Wedding Muhurtham | Harish H B & Sowmya R
+DESCRIPTION:Auspicious Muhurtham of Harish H B & Sowmya R (9:30 PM - 10:15 PM)\nThursday, November 19, 2026\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Bengaluru\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7
+LOCATION:Sri Nanjundeshwara Kalyana Mantapa, Samudaya Bhavana, Bengaluru, Karnataka
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

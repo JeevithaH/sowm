@@ -1,0 +1,766 @@
+/* ========================================================
+   Harish & Sowmya — Wedding Invitation Script
+   ======================================================== */
+
+// --- Global State ---
+let isEnvelopeOpened = false;
+let isAutoScrollActive = false;
+let autoScrollRafId = null;
+let touchPauseTimeout = null;
+let isUserInteracting = false;
+let currentPhotoIndex = 0;
+let isMusicPlaying = false;
+
+const galleryImages = [
+  "images/photo1.jpg",
+  "images/photo2.jpeg",
+  "images/photo3.jpeg",
+  "images/photo4.jpeg",
+  "images/photo5.jpeg"
+];
+
+// --- 1. Ambient Falling Petals Generator ---
+function createPetals(containerId, count = 16) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  const petalColors = ['#e0698f', '#ab7a45', '#d8407a', '#f7e3cd', '#b83b5e'];
+
+  for (let i = 0; i < count; i++) {
+    const petal = document.createElement('div');
+    petal.className = 'absolute animate-petal pointer-events-none';
+    
+    const left = Math.random() * 100;
+    const size = 14 + Math.random() * 16;
+    const duration = 14 + Math.random() * 14;
+    const delay = -(Math.random() * duration);
+    const sway = (Math.random() * 40 - 20) + 'px';
+    const color = petalColors[Math.floor(Math.random() * petalColors.length)];
+
+    petal.style.left = `${left}%`;
+    petal.style.top = `-30px`;
+    petal.style.fontSize = `${size}px`;
+    petal.style.color = color;
+    petal.style.setProperty('--sway', sway);
+    petal.style.animationDuration = `${duration}s`;
+    petal.style.animationDelay = `${delay}s`;
+
+    petal.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em" class="drop-shadow-sm opacity-80">
+        <path d="M12 2C9 5 4 10 4 14a8 8 0 0 0 16 0c0-4-5-9-8-12z" />
+      </svg>
+    `;
+    container.appendChild(petal);
+  }
+}
+
+// --- 1b. Tiny Glowing Shimmer Particles Generator (Scene 1) ---
+function createGlowingParticles() {
+  const container = document.getElementById('glowing-particles');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const particleCount = 32;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    const isSparkle = Math.random() > 0.6;
+    const size = isSparkle ? (10 + Math.random() * 8) : (3 + Math.random() * 4);
+    const top = Math.random() * 100;
+    const left = Math.random() * 100;
+    const duration = 2.5 + Math.random() * 3.5;
+    const delay = -(Math.random() * duration);
+
+    particle.className = 'absolute pointer-events-none animate-twinkle';
+    particle.style.top = `${top}%`;
+    particle.style.left = `${left}%`;
+    particle.style.animationDuration = `${duration}s`;
+    particle.style.animationDelay = `${delay}s`;
+
+    if (isSparkle) {
+      particle.style.fontSize = `${size}px`;
+      particle.style.color = '#fff6d6';
+      particle.style.textShadow = '0 0 8px rgba(255, 235, 179, 0.8), 0 0 16px rgba(212, 175, 55, 0.6)';
+      particle.innerHTML = '✦';
+    } else {
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.borderRadius = '50%';
+      particle.style.backgroundColor = '#fff9e6';
+      particle.style.boxShadow = '0 0 8px 3px rgba(255, 230, 150, 0.75), 0 0 15px 6px rgba(212, 175, 55, 0.35)';
+    }
+
+    container.appendChild(particle);
+  }
+}
+
+// --- 2. Petal Shower Burst Animation (Triggered on Open - Screenshot 3) ---
+function triggerPetalShower() {
+  const container = document.getElementById('petal-shower-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const flowerColors = ['#ffffff', '#ff758f', '#d81159', '#e0a96d', '#f4a261', '#f8edeb'];
+  const card = document.getElementById('envelope-card');
+  const cardRect = card ? card.getBoundingClientRect() : { left: window.innerWidth / 2 - 170, bottom: window.innerHeight / 2 + 100, width: 340 };
+
+  const startXCenter = cardRect.left + cardRect.width / 2;
+  const startY = cardRect.bottom - 40;
+
+  for (let i = 0; i < 45; i++) {
+    const petal = document.createElement('div');
+    petal.className = 'absolute animate-shower-petal pointer-events-none z-30';
+
+    const offsetX = (Math.random() - 0.5) * (cardRect.width * 0.75);
+    const startX = startXCenter + offsetX;
+    const driftX = (Math.random() - 0.5) * 140 + 'px';
+    const fallDist = (220 + Math.random() * 360) + 'px';
+    const size = 11 + Math.random() * 15;
+    const duration = 1.1 + Math.random() * 0.8;
+    const delay = Math.random() * 0.3;
+    const color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+
+    petal.style.left = `${startX}px`;
+    petal.style.top = `${startY}px`;
+    petal.style.fontSize = `${size}px`;
+    petal.style.color = color;
+    petal.style.setProperty('--drift-x', driftX);
+    petal.style.setProperty('--fall-dist', fallDist);
+    petal.style.animationDuration = `${duration}s`;
+    petal.style.animationDelay = `${delay}s`;
+
+    // 8-petal delicate star flower SVG (identical to reference image)
+    petal.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="currentColor" width="1em" height="1em" class="drop-shadow-sm">
+        <circle cx="12" cy="12" r="2.5" fill="#fefae0" />
+        <ellipse cx="12" cy="4.5" rx="2" ry="4" opacity="0.9" />
+        <ellipse cx="12" cy="19.5" rx="2" ry="4" opacity="0.9" />
+        <ellipse cx="4.5" cy="12" rx="4" ry="2" opacity="0.9" />
+        <ellipse cx="19.5" cy="12" rx="4" ry="2" opacity="0.9" />
+        <ellipse cx="6.5" cy="6.5" rx="2" ry="4" transform="rotate(-45 6.5 6.5)" opacity="0.85" />
+        <ellipse cx="17.5" cy="17.5" rx="2" ry="4" transform="rotate(-45 17.5 17.5)" opacity="0.85" />
+        <ellipse cx="17.5" cy="6.5" rx="2" ry="4" transform="rotate(45 17.5 6.5)" opacity="0.85" />
+        <ellipse cx="6.5" cy="19.5" rx="2" ry="4" transform="rotate(45 6.5 19.5)" opacity="0.85" />
+      </svg>
+    `;
+    container.appendChild(petal);
+  }
+}
+
+// --- 3. Envelope Opening & Audio Unlock (Consecutive Stages from Screenshots) ---
+function openInvitation() {
+  if (isEnvelopeOpened) return;
+  isEnvelopeOpened = true;
+
+  const envelopeScreen = document.getElementById('envelope-screen');
+  const envelopeCard = document.getElementById('envelope-card');
+  const waxSeal = document.getElementById('envelope-wax-seal');
+  const cardFlowerTL = document.getElementById('card-flower-tl');
+  const cardFlowerBR = document.getElementById('card-flower-br');
+  const burstFlowersBg = document.getElementById('burst-flowers-bg');
+  const burstTL = document.getElementById('burst-flower-tl');
+  const burstBR = document.getElementById('burst-flower-br');
+  const mainContent = document.getElementById('main-content');
+  const floatingControls = document.getElementById('floating-controls');
+
+  // Start Background Music on User Gesture
+  playMusic();
+
+  // STAGE 1: Wax seal dissolves & Corner Flowers POP UP and SLOWLY DISAPPEAR
+  if (waxSeal) {
+    waxSeal.style.opacity = '0';
+    waxSeal.style.transform = 'translate(-50%, -15px) scale(0.4)';
+  }
+
+  // Corner flowers POP UP outward with spring bounce and SLOWLY DISAPPEAR
+  if (cardFlowerTL) {
+    cardFlowerTL.classList.add('flower-pop-tl');
+  }
+  if (cardFlowerBR) {
+    cardFlowerBR.classList.add('flower-pop-br');
+  }
+
+  // Background Floral Bloom layer also blooms outward and gently dissolves
+  if (burstFlowersBg) {
+    burstFlowersBg.classList.remove('opacity-0');
+    burstFlowersBg.classList.add('opacity-100');
+  }
+  if (burstTL) {
+    burstTL.style.transform = 'scale(1.4) translate(-28px, -28px)';
+    burstTL.style.opacity = '0';
+    burstTL.style.transition = 'transform 1.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 1.3s ease-out';
+  }
+  if (burstBR) {
+    burstBR.style.transform = 'scale(1.4) translate(28px, 28px)';
+    burstBR.style.opacity = '0';
+    burstBR.style.transition = 'transform 1.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 1.3s ease-out';
+  }
+
+  // STAGE 2: Petal shower falls downward from bottom of card (Screenshot 3)
+  setTimeout(() => {
+    triggerPetalShower();
+  }, 280);
+
+  // STAGE 3: Card glides UPWARDS and floats away (Screenshot 3)
+  setTimeout(() => {
+    envelopeCard.style.transform = 'translateY(-110vh) scale(0.92)';
+    envelopeCard.style.opacity = '0';
+    if (burstFlowersBg) {
+      burstFlowersBg.style.transform = 'translateY(-60px) scale(1.15)';
+      burstFlowersBg.style.opacity = '0';
+    }
+  }, 480);
+
+  // STAGE 4: Reveal Main Invitation & Controls
+  setTimeout(() => {
+    envelopeScreen.style.opacity = '0';
+    mainContent.style.opacity = '1';
+    mainContent.style.transform = 'scale(1)';
+    floatingControls.classList.remove('opacity-0', 'pointer-events-none');
+    floatingControls.classList.add('opacity-100');
+
+    // Spawn falling ambient petals on main screen
+    createPetals('main-petals', 18);
+
+    // Refresh Swiper layout upon reveal
+    if (gallerySwiper) {
+      setTimeout(() => gallerySwiper.update(), 150);
+    }
+
+    setTimeout(() => {
+      envelopeScreen.style.display = 'none';
+    }, 1000);
+  }, 950);
+
+  // STAGE 5: Start Autoscroll
+  setTimeout(() => {
+    startAutoScroll();
+  }, 2200);
+}
+
+// --- 3. Background Music Controller (Mute / Unmute) ---
+const audio = document.getElementById('wedding-audio');
+const musicIcon = document.getElementById('music-icon');
+const btnMusic = document.getElementById('btn-music');
+
+const AUDIO_START_OFFSET = 0.0; // Audio is trimmed natively to start at 00:00:20
+
+if (audio) {
+  audio.src = 'song.mp3';
+}
+
+function updateMusicUI(isPlaying) {
+  isMusicPlaying = isPlaying;
+  const pulseEl = document.getElementById('music-pulse');
+  if (musicIcon) {
+    musicIcon.textContent = isPlaying ? '🔊' : '🔇';
+  }
+  if (btnMusic) {
+    btnMusic.setAttribute('aria-label', isPlaying ? 'Mute Sound' : 'Unmute Sound');
+    btnMusic.title = isPlaying ? 'Mute Sound' : 'Unmute Sound';
+    if (isPlaying) {
+      btnMusic.classList.add('animate-spin-slow');
+      if (pulseEl) pulseEl.classList.remove('hidden');
+    } else {
+      btnMusic.classList.remove('animate-spin-slow');
+      if (pulseEl) pulseEl.classList.add('hidden');
+    }
+  }
+}
+
+// When audio ends, loop back seamlessly
+if (audio) {
+  audio.addEventListener('ended', () => {
+    try {
+      audio.currentTime = 0;
+      audio.play().then(() => updateMusicUI(true)).catch(() => updateMusicUI(false));
+    } catch (e) {
+      console.log("Loop restart:", e);
+    }
+  });
+}
+
+function playMusic() {
+  if (!audio) return;
+  audio.muted = false;
+
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      updateMusicUI(true);
+    }).catch((err) => {
+      console.log("Audio play error:", err);
+      // Fallback: try song.mpeg if song.mp3 had issue
+      if (audio.src && !audio.src.includes('song.mpeg')) {
+        audio.src = 'song.mpeg';
+        audio.play().then(() => {
+          updateMusicUI(true);
+        }).catch((e2) => {
+          console.log("Fallback failed:", e2);
+          updateMusicUI(false);
+        });
+      } else {
+        updateMusicUI(false);
+      }
+    });
+  }
+}
+
+function toggleMusic() {
+  if (!audio) return;
+
+  if (isMusicPlaying && !audio.paused) {
+    // Currently playing -> Mute
+    audio.pause();
+    updateMusicUI(false);
+  } else {
+    // Currently muted -> Unmute & Play
+    audio.muted = false;
+    playMusic();
+  }
+}
+
+// --- 4. Continuous Fluid Autoscroll Engine ---
+// Default speed: 80 px/sec (calm, balanced & readable; suggestions: 70 gentle, 80 balanced, 95 brisk)
+const SCROLL_SPEED_PX_PER_SEC = 80;
+// Slowdown speed while showcasing Photo Gallery: 12 px/sec
+const GALLERY_SLOW_SPEED_PX_PER_SEC = 12;
+
+let scrollAccumulator = 0.0;
+let lastScrollTime = null;
+
+// Photo Gallery Showcase State
+let isGalleryShowcaseActive = false;
+let galleryShowcaseDone = false;
+let gallerySlideCount = 0;
+let galleryCycleTimer = null;
+
+function getGalleryCenterScroll() {
+  const galleryEl = document.getElementById('gallery-section');
+  if (!galleryEl) return 0;
+  const rect = galleryEl.getBoundingClientRect();
+  const currentY = window.scrollY !== undefined ? window.scrollY : document.documentElement.scrollTop;
+  return Math.max(0, currentY + rect.top - Math.max(20, (window.innerHeight - rect.height) / 2));
+}
+
+function startGalleryShowcaseCycle() {
+  if (galleryCycleTimer) clearInterval(galleryCycleTimer);
+  gallerySlideCount = 0;
+
+  if (gallerySwiper && gallerySwiper.autoplay) {
+    gallerySwiper.autoplay.stop();
+  }
+
+  galleryCycleTimer = setInterval(() => {
+    // If user interrupted or auto-scroll paused, stop
+    if (!isGalleryShowcaseActive || !isAutoScrollActive) {
+      clearInterval(galleryCycleTimer);
+      galleryCycleTimer = null;
+      return;
+    }
+
+    if (gallerySwiper) {
+      // Rapid, smooth 380ms slide transition
+      gallerySwiper.slideNext(380);
+    }
+    gallerySlideCount++;
+
+    // When all photos complete one full cycle (6 photos)
+    if (gallerySlideCount >= galleryImages.length) {
+      clearInterval(galleryCycleTimer);
+      galleryCycleTimer = null;
+      galleryShowcaseDone = true;
+      isGalleryShowcaseActive = false;
+      if (gallerySwiper && gallerySwiper.autoplay) {
+        gallerySwiper.autoplay.start();
+      }
+    }
+  }, 1300); // 1.3 seconds per photo (fast leftward slide rate)
+}
+
+// User Interrupt State (40-second pause)
+let userInterruptTimer = null;
+const USER_INTERRUPT_PAUSE_MS = 40000; // 40 seconds
+
+function handleUserInterrupt() {
+  if (!isEnvelopeOpened) return;
+
+  if (galleryCycleTimer) {
+    clearInterval(galleryCycleTimer);
+    galleryCycleTimer = null;
+  }
+  isGalleryShowcaseActive = false;
+
+  // If lightbox is currently open, don't schedule auto-scroll resume yet
+  if (lightbox && !lightbox.classList.contains('hidden')) {
+    pauseAutoScroll();
+    if (userInterruptTimer) {
+      clearTimeout(userInterruptTimer);
+      userInterruptTimer = null;
+    }
+    return;
+  }
+
+  // Pause auto-scroll immediately upon user interruption
+  pauseAutoScroll();
+
+  // Reset 40-second timer
+  if (userInterruptTimer) {
+    clearTimeout(userInterruptTimer);
+  }
+
+  userInterruptTimer = setTimeout(() => {
+    // Only resume if envelope is open and lightbox is closed
+    if (isEnvelopeOpened && (!lightbox || lightbox.classList.contains('hidden'))) {
+      startAutoScroll();
+    }
+  }, USER_INTERRUPT_PAUSE_MS);
+}
+
+// Attach user interruption listeners
+window.addEventListener('touchstart', handleUserInterrupt, { passive: true });
+window.addEventListener('wheel', handleUserInterrupt, { passive: true });
+window.addEventListener('pointerdown', handleUserInterrupt, { passive: true });
+window.addEventListener('keydown', (e) => {
+  if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Space'].includes(e.code)) {
+    handleUserInterrupt();
+  }
+}, { passive: true });
+
+function startAutoScroll() {
+  if (isAutoScrollActive) return;
+  isAutoScrollActive = true;
+  scrollAccumulator = 0.0;
+  lastScrollTime = null;
+
+  if (autoScrollRafId) {
+    cancelAnimationFrame(autoScrollRafId);
+    autoScrollRafId = null;
+  }
+  autoScrollRafId = requestAnimationFrame(runScrollLoop);
+}
+
+function pauseAutoScroll() {
+  isAutoScrollActive = false;
+  if (autoScrollRafId) {
+    cancelAnimationFrame(autoScrollRafId);
+    autoScrollRafId = null;
+  }
+  lastScrollTime = null;
+}
+
+function toggleAutoScroll() {
+  if (isAutoScrollActive) {
+    pauseAutoScroll();
+  } else {
+    startAutoScroll();
+  }
+}
+
+function checkGalleryShowcase(currentScroll) {
+  if (galleryShowcaseDone || isGalleryShowcaseActive) return;
+  const galleryEl = document.getElementById('gallery-section');
+  if (!galleryEl) return;
+
+  const targetY = getGalleryCenterScroll();
+  // When scrolling down reaches the centered position of the gallery
+  if (currentScroll >= targetY - 12 && currentScroll <= targetY + 120) {
+    window.scrollTo(0, targetY);
+    isGalleryShowcaseActive = true;
+    startGalleryShowcaseCycle();
+  }
+}
+
+function runScrollLoop(timestamp) {
+  if (!isAutoScrollActive) return;
+
+  if (lastScrollTime === null) {
+    lastScrollTime = timestamp;
+  }
+  const deltaSeconds = Math.min((timestamp - lastScrollTime) / 1000.0, 0.08);
+  lastScrollTime = timestamp;
+
+  const scrollTarget = document.scrollingElement || document.documentElement || document.body;
+  const currentScroll = window.scrollY !== undefined ? window.scrollY : (window.pageYOffset !== undefined ? window.pageYOffset : scrollTarget.scrollTop);
+
+  checkGalleryShowcase(currentScroll);
+
+  // Vertical scroll completely pauses (0 px/sec) while photos cycle through; otherwise 80 px/sec
+  const currentSpeed = isGalleryShowcaseActive ? 0 : SCROLL_SPEED_PX_PER_SEC;
+
+  const maxScroll = Math.max(0, scrollTarget.scrollHeight - window.innerHeight);
+
+  // Continuously scroll downward
+  if (currentScroll < maxScroll - 4) {
+    scrollAccumulator += currentSpeed * deltaSeconds;
+
+    if (scrollAccumulator >= 1.0) {
+      const step = Math.floor(scrollAccumulator);
+      scrollAccumulator -= step;
+      window.scrollBy(0, step);
+    }
+  }
+
+  autoScrollRafId = requestAnimationFrame(runScrollLoop);
+}
+
+// --- 5. Real-Time Countdown Timers ---
+// Targets:
+// Reception: Wednesday, November 18, 2026, 7:30 PM IST
+// Muhurtham: Thursday, November 19, 2026, 9:30 PM IST
+const weddingDate = new Date('2026-11-18T19:30:00+05:30').getTime();
+const muhurtaDate = new Date('2026-11-19T21:30:00+05:30').getTime();
+
+function formatTimeRemaining(diff) {
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+    seconds: Math.floor((diff % (1000 * 60)) / 1000)
+  };
+}
+
+function updateCountdown() {
+  const now = new Date().getTime();
+
+  // 1. Reception Countdown (Details page grid & Reception section)
+  const recepDiff = weddingDate - now;
+  const recepTime = formatTimeRemaining(recepDiff);
+
+  const timerDays = document.getElementById('timer-days');
+  if (timerDays) {
+    timerDays.textContent = String(recepTime.days).padStart(2, '0');
+    document.getElementById('timer-hours').textContent = String(recepTime.hours).padStart(2, '0');
+    document.getElementById('timer-minutes').textContent = String(recepTime.minutes).padStart(2, '0');
+    document.getElementById('timer-seconds').textContent = String(recepTime.seconds).padStart(2, '0');
+  }
+
+  const receptionCountdownEl = document.getElementById('reception-live-countdown');
+  if (receptionCountdownEl) {
+    receptionCountdownEl.textContent = `${recepTime.days} days ${recepTime.hours} hours ${recepTime.minutes} min ${recepTime.seconds} sec`;
+  }
+
+  // 2. Muhurtham Countdown (Muhurtha section)
+  const muhurtaDiff = muhurtaDate - now;
+  const muhurtaTime = formatTimeRemaining(muhurtaDiff);
+
+  const muhurtaCountdownEl = document.getElementById('muhurta-live-countdown');
+  if (muhurtaCountdownEl) {
+    muhurtaCountdownEl.textContent = `${muhurtaTime.days} days ${muhurtaTime.hours} hours ${muhurtaTime.minutes} min ${muhurtaTime.seconds} sec`;
+  }
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// --- 5b. Download .ICS Calendar Invite (Universal Apple/Outlook/Google) ---
+function downloadCalendarInvite(type) {
+  let title, start, end, description;
+  if (type === 'reception') {
+    title = 'Wedding Reception | Harish H B & Sowmya R';
+    start = '20261118T140000Z'; // Nov 18, 7:30 PM IST (14:00 UTC)
+    end = '20261118T180000Z';   // Nov 18, 11:30 PM IST (18:00 UTC)
+    description = 'Wedding Reception of Harish H B & Sowmya R\\nWednesday, November 18, 2026 • 7:30 PM\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Bengaluru\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
+  } else {
+    title = 'Wedding Muhurtham | Harish H B & Sowmya R';
+    start = '20261119T160000Z'; // Nov 19, 9:30 PM IST (16:00 UTC)
+    end = '20261119T164500Z';   // Nov 19, 10:15 PM IST (16:45 UTC)
+    description = 'Auspicious Muhurtham of Harish H B & Sowmya R (9:30 PM - 10:15 PM)\\nThursday, November 19, 2026\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Bengaluru\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
+  }
+  const location = 'Sri Nanjundeshwara Kalyana Mantapa, Samudaya Bhavana, Bengaluru, Karnataka';
+
+  const icsLines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Harish and Sowmya Wedding//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:wedding-${type}-2026@harish-sowmya.wedding`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ];
+
+  const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${type === 'reception' ? 'Reception_Harish_Sowmya' : 'Muhurtham_Harish_Sowmya'}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// --- 6. Photo Gallery Lightbox ---
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxCounter = document.getElementById('lightbox-counter');
+
+function openLightbox(index) {
+  currentPhotoIndex = index;
+  updateLightboxView();
+  lightbox.classList.remove('hidden');
+  setTimeout(() => lightbox.classList.remove('opacity-0'), 10);
+  document.body.style.overflow = 'hidden';
+  if (isAutoScrollActive) pauseAutoScroll();
+}
+
+function closeLightbox() {
+  lightbox.classList.add('opacity-0');
+  setTimeout(() => {
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = '';
+    startAutoScroll();
+  }, 300);
+}
+
+function nextPhoto() {
+  currentPhotoIndex = (currentPhotoIndex + 1) % galleryImages.length;
+  updateLightboxView();
+}
+
+function prevPhoto() {
+  currentPhotoIndex = (currentPhotoIndex - 1 + galleryImages.length) % galleryImages.length;
+  updateLightboxView();
+}
+
+function updateLightboxView() {
+  lightboxImg.src = galleryImages[currentPhotoIndex];
+  lightboxCounter.textContent = `${currentPhotoIndex + 1} / ${galleryImages.length}`;
+
+  for (let i = 0; i < galleryImages.length; i++) {
+    const thumb = document.getElementById(`thumb-${i}`);
+    if (thumb) {
+      if (i === currentPhotoIndex) {
+        thumb.classList.add('border-[#ab7a45]', 'scale-105', 'opacity-100');
+        thumb.classList.remove('opacity-50', 'border-transparent');
+      } else {
+        thumb.classList.add('opacity-50', 'border-transparent');
+        thumb.classList.remove('border-[#ab7a45]', 'scale-105', 'opacity-100');
+      }
+    }
+  }
+}
+
+// Touch swipe gestures for mobile lightbox
+let touchStartX = 0;
+let touchEndX = 0;
+const touchArea = document.getElementById('lightbox-touch-area');
+
+touchArea.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+touchArea.addEventListener('touchend', (e) => {
+  touchEndX = e.changedTouches[0].screenX;
+  if (touchStartX - touchEndX > 45) {
+    nextPhoto();
+  } else if (touchEndX - touchStartX > 45) {
+    prevPhoto();
+  }
+}, { passive: true });
+
+window.addEventListener('keydown', (e) => {
+  if (lightbox.classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight') nextPhoto();
+  if (e.key === 'ArrowLeft') prevPhoto();
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// --- 6b. Swiper 3D Coverflow Gallery ---
+let gallerySwiper = null;
+
+function initGallerySwiper() {
+  if (typeof Swiper === 'undefined') return;
+
+  gallerySwiper = new Swiper('.gallery-coverflow-swiper', {
+    effect: 'coverflow',
+    grabCursor: true,
+    centeredSlides: true,
+    slidesPerView: 'auto',
+    loop: true,
+    loopedSlides: 6,
+    speed: 480, // Snappy 480ms slide animation
+    autoplay: {
+      delay: 1800, // Faster 1.8s turnover per photo (fast left-to-right showcase)
+      disableOnInteraction: false,
+      pauseOnMouseEnter: true,
+    },
+    coverflowEffect: {
+      rotate: 35,
+      stretch: 10,
+      depth: 160,
+      modifier: 1,
+      scale: 0.82,
+      slideShadows: true,
+    },
+    navigation: {
+      nextEl: '.gallery-next-btn',
+      prevEl: '.gallery-prev-btn',
+    },
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+      dynamicBullets: true,
+    },
+    slideToClickedSlide: true,
+    watchSlidesProgress: true,
+  });
+
+  // Clicking the active centered slide opens lightbox; clicking side slides brings them to center
+  gallerySwiper.on('click', (swiper, event) => {
+    const clickedSlide = event.target.closest('.swiper-slide');
+    if (!clickedSlide) return;
+
+    if (clickedSlide.classList.contains('swiper-slide-active')) {
+      const realIndex = swiper.realIndex;
+      openLightbox(realIndex);
+    }
+  });
+}
+
+// Initial Setup
+window.addEventListener('DOMContentLoaded', () => {
+  createGlowingParticles();
+  createPetals('envelope-petals', 16);
+  initGallerySwiper();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('open') === '1') {
+    openInvitation();
+  }
+});
+
+
+// Venue View Switcher: Google Scanner vs Live Map
+function switchVenueMode(mode) {
+  const scannerContainer = document.getElementById('venue-scanner-container');
+  const mapContainer = document.getElementById('venue-map-container');
+  const tabScanner = document.getElementById('venue-tab-scanner');
+  const tabMap = document.getElementById('venue-tab-map');
+
+  if (!scannerContainer || !mapContainer || !tabScanner || !tabMap) return;
+
+  if (mode === 'scanner') {
+    scannerContainer.classList.remove('hidden');
+    mapContainer.classList.add('hidden');
+    tabScanner.className = 'px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 bg-[#640e1b] text-white shadow-xs cursor-pointer';
+    tabMap.className = 'px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 text-[#640e1b] hover:text-[#38000a] cursor-pointer';
+  } else {
+    scannerContainer.classList.add('hidden');
+    mapContainer.classList.remove('hidden');
+    tabMap.className = 'px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 bg-[#640e1b] text-white shadow-xs cursor-pointer';
+    tabScanner.className = 'px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-200 text-[#640e1b] hover:text-[#38000a] cursor-pointer';
+  }
+}
