@@ -563,14 +563,14 @@ function downloadCalendarInvite(type) {
     title = 'Wedding Reception | Harish H B & Sowmya R';
     start = '20261118T140000Z'; // Nov 18, 7:30 PM IST (14:00 UTC)
     end = '20261118T180000Z';   // Nov 18, 11:30 PM IST (18:00 UTC)
-    description = 'Wedding Reception of Harish H B & Sowmya R\\nWednesday, November 18, 2026 • 7:30 PM\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Bengaluru\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
+    description = 'Wedding Reception of Harish H B & Sowmya R\\nWednesday, November 18, 2026 • 7:30 PM\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Santebennur\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
   } else {
     title = 'Wedding Muhurtham | Harish H B & Sowmya R';
     start = '20261119T160000Z'; // Nov 19, 9:30 PM IST (16:00 UTC)
     end = '20261119T164500Z';   // Nov 19, 10:15 PM IST (16:45 UTC)
-    description = 'Auspicious Muhurtham of Harish H B & Sowmya R (9:30 PM - 10:15 PM)\\nThursday, November 19, 2026\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Bengaluru\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
+    description = 'Auspicious Muhurtham of Harish H B & Sowmya R (9:30 PM - 10:15 PM)\\nThursday, November 19, 2026\\nVenue: Sri Nanjundeshwara Kalyana Mantapa / Samudaya Bhavana, Santebennur\\nMap: https://maps.app.goo.gl/uVx3AZhB4pWV444j7';
   }
-  const location = 'Sri Nanjundeshwara Kalyana Mantapa, Samudaya Bhavana, Bengaluru, Karnataka';
+  const location = 'Sri Nanjundeshwara Kalyana Mantapa, Samudaya Bhavana, Santebennur, Karnataka';
 
   const icsLines = [
     'BEGIN:VCALENDAR',
